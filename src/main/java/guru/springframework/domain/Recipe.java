@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import reactor.core.CoreSubscriber;
+import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,7 +17,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Document
-public class Recipe {
+public class Recipe extends Mono<Recipe> {
 
     @Id
     private String id;
@@ -42,4 +44,5 @@ public class Recipe {
         this.ingredients.add(ingredient);
         return this;
     }
+
 }
