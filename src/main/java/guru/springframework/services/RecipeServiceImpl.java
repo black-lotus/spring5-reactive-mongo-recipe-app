@@ -7,7 +7,6 @@ import guru.springframework.domain.Recipe;
 import guru.springframework.repositories.reactive.RecipeReactiveRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,13 +33,7 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public Flux<Recipe> getRecipes() {
         log.debug("I'm in the service");
-
-        Set<Recipe> recipeSet = new HashSet<>();
-        // recipeReactiveRepository.findAll().iterator().forEachRemaining(recipeSet::add);
-
-
-
-        return recipeSet;
+        return recipeReactiveRepository.findAll();
     }
 
     @Override
@@ -49,29 +42,24 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @Transactional
-    public RecipeCommand findCommandById(String id) {
+    public Mono<RecipeCommand> findCommandById(String id) {
+        return recipeReactiveRepository.findById(id)
+                .map(recipe -> {
+                    RecipeCommand recipeCommand = recipeToRecipeCommand.convert(recipe);
 
-        RecipeCommand recipeCommand = recipeToRecipeCommand.convert(findById(id));
+                    recipeCommand.getIngredients().forEach(rc -> {
+                        rc.setRecipeId(recipeCommand.getId());
+                    });
 
-        //enhance command object with id value
-        if(recipeCommand.getIngredients() != null && recipeCommand.getIngredients().size() > 0){
-            recipeCommand.getIngredients().forEach(rc -> {
-                rc.setRecipeId(recipeCommand.getId());
-            });
-        }
-
-        return recipeCommand;
+                    return recipeCommand;
+                });
     }
 
     @Override
-    @Transactional
-    public RecipeCommand saveRecipeCommand(RecipeCommand command) {
-        Recipe detachedRecipe = recipeCommandToRecipe.convert(command);
-
-        Recipe savedRecipe = recipeReactiveRepository.save(detachedRecipe).block();
-        log.debug("Saved RecipeId:" + savedRecipe.getId());
-        return recipeToRecipeCommand.convert(savedRecipe);
+    public Mono<RecipeCommand> saveRecipeCommand(RecipeCommand command) {
+        return recipeReactiveRepository
+                .save(recipeCommandToRecipe.convert(command))
+                .map(recipeToRecipeCommand::convert);
     }
 
     @Override

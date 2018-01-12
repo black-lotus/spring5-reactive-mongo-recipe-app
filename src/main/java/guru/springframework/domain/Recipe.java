@@ -17,7 +17,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Document
-public class Recipe extends Mono<Recipe> {
+public class Recipe {
 
     @Id
     private String id;
